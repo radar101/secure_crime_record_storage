@@ -29,26 +29,42 @@ class _FileBaseServiceState extends State<FileBaseService> {
       setState(() {
         _filePath = result.files.first.path!;
       });
-      uploadObject(_filePath);
-      // Call your upload function here passing _filePath
+      // uploadObject(_filePath);
     }
   }
 
-  Future<void> uploadObject(String file) async {
+  Future<void> uploadObject(
+      String bucketNo, String filePath, String name) async {
     try {
-      var response =
-          await minio.fPutObject('crime-images', 'sirstObject', file);
+      if (!await minio.bucketExists(bucketNo)) {
+        await minio.makeBucket(bucketNo);
+        print('bucket $bucketNo created');
+      } else {
+        print('bucket $bucketNo already exists');
+      }
+
+      var response = await minio.fPutObject(bucketNo, name, filePath);
       print("This is the $response");
     } catch (e) {
       print("Error during upload $e");
     }
   }
 
+  Future<void> getStats() async {
+    final stat = await minio.statObject('crime-images', 'firstObject');
+    print(stat.acl);
+    print(stat.etag);
+    print(stat.lastModified);
+    print(stat.metaData!['cid']);
+    print(stat.size);
+  }
+
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-    _pickImage();
+    getStats();
+    // _pickImage();
   }
 
   @override
