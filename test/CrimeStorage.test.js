@@ -39,7 +39,7 @@ contract("CrimeStorage", ([deployer]) => {
 
       let isImageFound = false;
       for (let i = 0; i < numberOfImages; i++) {
-        const imageHash = await crimeStorage.getImageHash(caseNumber, i);
+        const imageHash = await crimeStorage.getImageHash(caseNumber);
         if (imageHash === cid) {
           isImageFound = true;
           break;

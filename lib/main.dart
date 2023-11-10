@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:seminar_blockchain/screens/new_evidence.dart';
 import 'package:seminar_blockchain/service/crime_service.dart';
-import 'package:seminar_blockchain/service/filebase.dart';
 import 'package:seminar_blockchain/screens/home.dart';
 
 void main() {

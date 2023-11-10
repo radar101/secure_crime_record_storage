@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:seminar_blockchain/service/crimeRecordModel.dart';
@@ -14,32 +13,41 @@ class CrimeService extends ChangeNotifier {
   late EthereumAddress _contractAddress;
   late DeployedContract _deployedContract;
   late ContractFunction _uploadImage;
-  late ContractFunction _cases;
-  late ContractFunction _caseImageHashes;
+  // late ContractFunction _cases;
+  // late ContractFunction _caseImageHashes;
   late ContractFunction _getImageHash;
   bool isLoading = true;
   List<CrimeRecord> crimeRecord = [];
+  List<String> ipfsHash = [];
 
   // Remote Procedure Call URL
-  final String _rpcUrl =
-      Platform.isAndroid ? 'http://10.0.2.2:7545' : 'http://127.0.0.1:7545';
+  final String _rpcUrl = 'http://192.168.196.64:7545';
+  // Platform.isAndroid ? 'http://10.0.2.2:7545' : 'http://127.0.0.1:7545';
 
   // Web Socket URL
-  final String _wsUrl =
-      Platform.isAndroid ? 'http://10.0.2.2:7545' : 'ws://127.0.0.1:7545';
+  final String _wsUrl = 'ws://192.168.196.64:7545';
 
+  // Platform.isAndroid ? 'http://10.0.2.2:7545' :
   final String _privateKey =
-      "0x1aff51dca1a85b890be0b62b31f88c6e92ccb91c6404f5649bec56987636511b";
+      "0x53f80de2407055f84cc2f1cca179208d751185f1d925e69696341bcb97bbb611";
 
   CrimeService() {
     init();
   }
 
   Future<void> init() async {
-    _web3client = Web3Client(_rpcUrl, http.Client(), socketConnector: () {
-      return IOWebSocketChannel.connect(_wsUrl).cast<String>();
-    });
+    print("Constructor called");
+    try {
+      _web3client = Web3Client(_rpcUrl, http.Client(), socketConnector: () {
+        return IOWebSocketChannel.connect(_wsUrl).cast<String>();
+      });
+    } catch (e) {
+      print("Error while initializing web3client ${e.toString()}");
+    }
 
+    EtherAmount amount = await _web3client.getBalance(
+        EthereumAddress.fromHex("0x9950E04f75b077051Ee9C066D5b79Fe3cFD90299"));
+    print(amount);
     await getABI();
     await getCredentials();
     await getDeployedContract();
@@ -68,25 +76,30 @@ class CrimeService extends ChangeNotifier {
   Future<void> getDeployedContract() async {
     _deployedContract = DeployedContract(_abiCode, _contractAddress);
     _uploadImage = _deployedContract.function("uploadImage");
-    _cases = _deployedContract.function("cases");
-    _caseImageHashes = _deployedContract.function("caseImageHashes");
     _getImageHash = _deployedContract.function("getImageHash");
-    // await fetchNotes();
   }
 
-  Future<void> getCaseData(String caseNumber) async {
-    // List totalTaskList = await _web3client
-    //     .call(contract: _deployedContract, function: _noteCount, params: []);
-    // print("The task list is $totalTaskList");
-    // int totalTaskLen = totalTaskList[0].toInt();
-    crimeRecord.clear();
-    var temp = await _web3client.call(
-        contract: _deployedContract,
-        function: _cases,
-        params: [BigInt.from(int.parse(caseNumber) - 1)]);
-    print(temp);
-    isLoading = false;
-    notifyListeners();
+  Future<List<String>> getCaseData(String caseNumber) async {
+    ipfsHash.clear();
+    print("Called get case data");
+    try {
+      var temp = await _web3client.call(
+          contract: _deployedContract,
+          function: _getImageHash,
+          params: [BigInt.from(int.parse(caseNumber))]);
+      print(temp);
+      temp = temp[0];
+      for (int i = 0; i < temp.length; i++) {
+        ipfsHash.add(temp[i]);
+      }
+
+      isLoading = false;
+      notifyListeners();
+      return ipfsHash;
+    } catch (e) {
+      print("Error while making get request ${e.toString()}");
+      return [];
+    }
   }
 
   Future<void> putCaseData(
@@ -99,16 +112,14 @@ class CrimeService extends ChangeNotifier {
           contract: _deployedContract,
           function: _uploadImage,
           parameters: [BigInt.from(caseNumber), description, ipfsHash],
-          gasPrice:
-              EtherAmount.inWei(BigInt.from(20000000000)), // Reduced gas price
-          maxGas: 6721975, // Reduced gas limit
+          gasPrice: EtherAmount.inWei(BigInt.from(20000000000)),
+          maxGas: 6721975,
         ),
         chainId: 1337,
       );
       // Get the transaction receipt
       var receipt = await _web3client.getTransactionReceipt(response);
 
-      // Check if the receipt is available
       if (receipt != null) {
         print("Transaction Hash: ${receipt.transactionHash}");
         print("Block Number: ${receipt.blockNumber}");

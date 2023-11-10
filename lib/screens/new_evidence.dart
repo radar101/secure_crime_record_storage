@@ -1,5 +1,4 @@
 import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:seminar_blockchain/styles/text.dart';
@@ -21,9 +20,6 @@ class NewEvidenceState extends State<NewEvidence> {
   TextEditingController descriptionController = TextEditingController();
   String _filePath = "";
   String cid = "";
-
-  
-  
 
   @override
   Widget build(BuildContext context) {
@@ -74,14 +70,18 @@ class NewEvidenceState extends State<NewEvidence> {
           int randomIndex = random.nextInt(chars.length);
           result += chars[randomIndex];
         }
-        print(result);
+        var stopwatch = Stopwatch()..start();
         if (_filePath.length != 0) {
           var response = await minio.fPutObject(bucketName, result, _filePath);
+          stopwatch.stop();
+          print("Upload took ${stopwatch.elapsed}");
           print("This is the $response");
         }
+
         final stat = await minio.statObject(bucketName, result);
         cid = stat.metaData!['cid'].toString();
         print(cid);
+
         crimeService.putCaseData(
             int.parse(caseController.text), descriptionController.text, cid);
       } catch (e) {

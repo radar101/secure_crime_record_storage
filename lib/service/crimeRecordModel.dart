@@ -1,5 +1,5 @@
 class CrimeRecord {
-  final String caseNumber;
+  final int caseNumber;
   final String description;
   final String cid;
 

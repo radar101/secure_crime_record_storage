@@ -1,21 +1,32 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.4.22 <0.9.0;
+pragma experimental ABIEncoderV2;
 
 contract CrimeStorage {
+
     struct CrimeCase {
         uint256 caseNumber;
         uint256 numberOfImages;
         mapping(uint256 => string) description;
-        mapping(uint256 => string) images; // Mapping from image ID to IPFS hash
+        mapping(uint256 => string) images; 
     }
 
-    mapping(uint256 => CrimeCase) public cases; // Mapping from case number to CrimeCase struct
+    mapping(uint256 => CrimeCase) public cases; 
     mapping(uint256 => string[]) public caseImageHashes;
     event ImageUploaded(
         uint256 caseNumber,
         string description,
         string ipfsHash
     );
+
+    constructor() public {
+        cases[0].caseNumber = 1;
+        cases[0].numberOfImages = 1;
+        cases[0].description[0] = "Dummy Case Description";
+        cases[0].images[0] = "dummy_ipfs_hash_123";
+        caseImageHashes[0].push("dummy_ipfs_hash_123");
+        emit ImageUploaded(1, "Dummy Case Description", "dummy_ipfs_hash_123");
+    }
 
     // Function to upload an image to IPFS and store the hash on the blockchain
     function uploadImage(
@@ -33,9 +44,8 @@ contract CrimeStorage {
     }
 
     function getImageHash(
-        uint256 caseNumber,
-        uint256 imageId
-    ) public view returns (string memory) {
-        return cases[caseNumber].images[imageId];
+        uint256 caseNumber
+    ) public view returns (string[] memory) {
+        return caseImageHashes[caseNumber];
     }
 }
