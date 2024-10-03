@@ -22,13 +22,6 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
     caseController.dispose();
   }
-  // @override
-  // void initState() {
-  //   // TODO: implement initState
-  //   super.initState();
-  //   CrimeService();
-  //   // CrimeService().putCaseData("1", "fakdjfakfd", "fjdkalflkdfdfj");
-  // }
 
   Widget build(BuildContext context) {
     var crimeServices = context.watch<CrimeService>();
